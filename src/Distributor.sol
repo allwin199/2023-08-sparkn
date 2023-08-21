@@ -162,7 +162,6 @@ contract Distributor {
         // send commission fee as well as all the remaining tokens to STADIUM_ADDRESS to avoid dust remaining
         _commissionTransfer(erc20);
         emit Distributed(token, winners, percentages, data);
-        // @audit emit can be moved above interactions
     }
 
     /**

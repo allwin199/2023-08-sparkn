@@ -67,8 +67,12 @@ contract ProxyFactory is Ownable, EIP712 {
     /// @notice record contest close time by salt
     /// @dev The contest doesn't exist when value is 0
     mapping(bytes32 => uint256) public saltToCloseTime;
+    // @audit named mapping can be used for better readability
+    // mapping(bytes32 contestId => uint256 contestDuration) public whitelistedTokens;
     /// @dev record whitelisted tokens
     mapping(address => bool) public whitelistedTokens;
+    // @audit named mapping can be used for better readability
+    // mapping(address token => bool isWhiteListed) public whitelistedTokens;
     // @audit uint256 can be used instead of bool
 
     ////////////////////////////
@@ -109,7 +113,6 @@ contract ProxyFactory is Ownable, EIP712 {
         onlyOwner
     {
         if (organizer == address(0) || implementation == address(0)) revert ProxyFactory__NoZeroAddress();
-        // @audit address(0) can be made as immutable and checked from that
 
         if (closeTime > block.timestamp + MAX_CONTEST_PERIOD || closeTime < block.timestamp) {
             revert ProxyFactory__CloseTimeNotInRange();
