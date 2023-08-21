@@ -89,6 +89,7 @@ contract ProxyFactory is Ownable, EIP712 {
             }
         }
     }
+    // @audit calldata can be used instead of memory
 
     ////////////////////////////////////////////
     /////// External & Public functions ////////
@@ -189,7 +190,6 @@ contract ProxyFactory is Ownable, EIP712 {
     ) public onlyOwner returns (address) {
         bytes32 salt = _calculateSalt(organizer, contestId, implementation);
         if (saltToCloseTime[salt] == 0) revert ProxyFactory__ContestIsNotRegistered();
-        // @audit if consistency
         if (saltToCloseTime[salt] + EXPIRATION_TIME > block.timestamp) revert ProxyFactory__ContestIsNotExpired();
         // require(saltToCloseTime[salt] == 0, "Contest is not registered");
         // require(saltToCloseTime[salt] < block.timestamp + EXPIRATION_TIME, "Contest is not expired");

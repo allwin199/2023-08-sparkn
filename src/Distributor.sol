@@ -54,7 +54,10 @@ contract Distributor {
     //////////////////////////////////////
     /* solhint-disable */
     uint8 private constant VERSION = 1; // version is 1 for now
-    address private immutable FACTORY_ADDRESS; //@audit immutable consistency
+    address private immutable FACTORY_ADDRESS;
+    //@audit immutable consistency
+    // follow same like proxy.sol
+    // _factoryAddress or i_factoryAddress
     address private immutable STADIUM_ADDRESS;
     uint256 private constant COMMISSION_FEE = 500; // this can be changed in the future
     // a constant value of 10,000 (basis points) = 100%
@@ -97,6 +100,8 @@ contract Distributor {
         }
         _distribute(token, winners, percentages, data);
     }
+    // @audit use calldata over memory
+    // reference => https://gist.github.com/hrkrshnn/ee8fabd532058307229d65dcd5836ddc#use-calldata-instead-of-memory-for-function-parameters
 
     ////////////////////////////////////////////
     /////// Internal & Private functions ///////
@@ -114,6 +119,7 @@ contract Distributor {
      * @param data The data to be logged. It is supposed to be used for showing the realation bbetween winners and proposals.
      */
     // @audit data has typos
+    // @audit use calldata over memory
     function _distribute(address token, address[] memory winners, uint256[] memory percentages, bytes memory data)
         internal
     {
