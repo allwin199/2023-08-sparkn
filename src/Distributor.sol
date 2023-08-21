@@ -54,7 +54,7 @@ contract Distributor {
     //////////////////////////////////////
     /* solhint-disable */
     uint8 private constant VERSION = 1; // version is 1 for now
-    address private immutable FACTORY_ADDRESS;
+    address private immutable FACTORY_ADDRESS; //@audit immutable consistency
     address private immutable STADIUM_ADDRESS;
     uint256 private constant COMMISSION_FEE = 500; // this can be changed in the future
     // a constant value of 10,000 (basis points) = 100%
@@ -74,7 +74,8 @@ contract Distributor {
     ) 
     /* solhint-enable */
     {
-        if (factoryAddress == address(0) || stadiumAddress == address(0)) revert Distributor__NoZeroAddress();
+        // @audit nested if checks
+        if (factoryAddress == address(0) || stadiumAddress == address(0)) revert Distributor__NoZeroAddress(); // @audit if condition consistency, no brackets here, but brackets are present in other
         FACTORY_ADDRESS = factoryAddress; // initialize with deployed factory address beforehand
         STADIUM_ADDRESS = stadiumAddress; // official address to receive commission fee
     }
@@ -113,35 +114,39 @@ contract Distributor {
      * @param percentages The percentages of winners
      * @param data The data to be logged. It is supposed to be used for showing the realation bbetween winners and proposals.
      */
+    // @audit data has typos
     function _distribute(address token, address[] memory winners, uint256[] memory percentages, bytes memory data)
         internal
     {
         // token address input check
-        if (token == address(0)) revert Distributor__NoZeroAddress();
+        if (token == address(0)) revert Distributor__NoZeroAddress(); // @audit if consistency
         if (!_isWhiteListed(token)) {
             revert Distributor__InvalidTokenAddress();
         }
         // winners and percentages input check
-        if (winners.length == 0 || winners.length != percentages.length) revert Distributor__MismatchedArrays();
+        if (winners.length == 0 || winners.length != percentages.length) revert Distributor__MismatchedArrays(); // @audit nested if checks
+        // @audit winners is reading twice from storage
         uint256 percentagesLength = percentages.length;
         uint256 totalPercentage;
         for (uint256 i; i < percentagesLength;) {
-            totalPercentage += percentages[i];
+            totalPercentage += percentages[i]; // @audit += is used
             unchecked {
                 ++i;
             }
         }
         // check if totalPercentage is correct
         if (totalPercentage != (10000 - COMMISSION_FEE)) {
+            // @audit magic number is used
             revert Distributor__MismatchedPercentages();
         }
         IERC20 erc20 = IERC20(token);
         uint256 totalAmount = erc20.balanceOf(address(this));
 
         // if there is no token to distribute, then revert
-        if (totalAmount == 0) revert Distributor__NoTokenToDistribute();
+        if (totalAmount == 0) revert Distributor__NoTokenToDistribute(); // @audit if consistency
 
         uint256 winnersLength = winners.length; // cache length
+        // @audit winnersLength should be moved higher, so it can be used in multiple places
         for (uint256 i; i < winnersLength;) {
             uint256 amount = totalAmount * percentages[i] / BASIS_POINTS;
             erc20.safeTransfer(winners[i], amount);
