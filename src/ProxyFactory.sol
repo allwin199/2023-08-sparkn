@@ -81,15 +81,12 @@ contract ProxyFactory is Ownable, EIP712 {
      */
     constructor(address[] memory _whitelistedTokens) EIP712("ProxyFactory", "1") Ownable() {
         if (_whitelistedTokens.length == 0) revert ProxyFactory__NoEmptyArray();
-        // @audit if consistency
         for (uint256 i; i < _whitelistedTokens.length;) {
             if (_whitelistedTokens[i] == address(0)) revert ProxyFactory__NoZeroAddress();
-            // @audit if consistency
             whitelistedTokens[_whitelistedTokens[i]] = true;
             unchecked {
                 i++;
             }
-            // @audit ++i can be used
         }
     }
 
@@ -111,14 +108,15 @@ contract ProxyFactory is Ownable, EIP712 {
         onlyOwner
     {
         if (organizer == address(0) || implementation == address(0)) revert ProxyFactory__NoZeroAddress();
-        // @audit if consistency
+        // @audit address(0) can be made as immutable and checked from that
+
         if (closeTime > block.timestamp + MAX_CONTEST_PERIOD || closeTime < block.timestamp) {
             revert ProxyFactory__CloseTimeNotInRange();
         }
-        // @audit nested if
+
         bytes32 salt = _calculateSalt(organizer, contestId, implementation);
         if (saltToCloseTime[salt] != 0) revert ProxyFactory__ContestIsAlreadyRegistered();
-        // @audit if consistency
+
         saltToCloseTime[salt] = closeTime;
         emit SetContest(organizer, contestId, closeTime, implementation);
     }
@@ -137,10 +135,8 @@ contract ProxyFactory is Ownable, EIP712 {
     {
         bytes32 salt = _calculateSalt(msg.sender, contestId, implementation);
         if (saltToCloseTime[salt] == 0) revert ProxyFactory__ContestIsNotRegistered();
-        // @audit if consistency
         // can set close time to current time and end it immediately if organizer wish
         if (saltToCloseTime[salt] > block.timestamp) revert ProxyFactory__ContestIsNotClosed();
-        // @audit if consistency
         address proxy = _deployProxy(msg.sender, contestId, implementation);
         _distribute(proxy, data);
         return proxy;
@@ -167,12 +163,9 @@ contract ProxyFactory is Ownable, EIP712 {
     ) public returns (address) {
         bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(contestId, data)));
         if (ECDSA.recover(digest, signature) != organizer) revert ProxyFactory__InvalidSignature();
-        // @audit if consistency
         bytes32 salt = _calculateSalt(organizer, contestId, implementation);
         if (saltToCloseTime[salt] == 0) revert ProxyFactory__ContestIsNotRegistered();
-        // @audit if consistency
         if (saltToCloseTime[salt] > block.timestamp) revert ProxyFactory__ContestIsNotClosed();
-        // @audit if consistency
         address proxy = _deployProxy(organizer, contestId, implementation);
         _distribute(proxy, data);
         return proxy;
@@ -198,7 +191,6 @@ contract ProxyFactory is Ownable, EIP712 {
         if (saltToCloseTime[salt] == 0) revert ProxyFactory__ContestIsNotRegistered();
         // @audit if consistency
         if (saltToCloseTime[salt] + EXPIRATION_TIME > block.timestamp) revert ProxyFactory__ContestIsNotExpired();
-        // @audit nested if can be used
         // require(saltToCloseTime[salt] == 0, "Contest is not registered");
         // require(saltToCloseTime[salt] < block.timestamp + EXPIRATION_TIME, "Contest is not expired");
         address proxy = _deployProxy(organizer, contestId, implementation);
@@ -224,13 +216,10 @@ contract ProxyFactory is Ownable, EIP712 {
         bytes calldata data
     ) public onlyOwner {
         if (proxy == address(0)) revert ProxyFactory__ProxyAddressCannotBeZero();
-        // @audit if consistency
         bytes32 salt = _calculateSalt(organizer, contestId, implementation);
         if (saltToCloseTime[salt] == 0) revert ProxyFactory__ContestIsNotRegistered();
-        // @audit if consistency
         // distribute only when it exists and expired
         if (saltToCloseTime[salt] + EXPIRATION_TIME > block.timestamp) revert ProxyFactory__ContestIsNotExpired();
-        // @audit if consistency
         _distribute(proxy, data);
     }
 
@@ -242,7 +231,6 @@ contract ProxyFactory is Ownable, EIP712 {
     function getProxyAddress(bytes32 salt, address implementation) public view returns (address proxy) {
         bytes memory code = abi.encodePacked(type(Proxy).creationCode, uint256(uint160(implementation)));
         bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(code)));
-        // @audit abi.encode should be preferred
         proxy = address(uint160(uint256(hash)));
     }
 
