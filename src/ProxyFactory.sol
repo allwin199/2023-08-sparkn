@@ -61,7 +61,7 @@ contract ProxyFactory is Ownable, EIP712 {
     /////// State Variables ////////
     ////////////////////////////////
     // contest distribution expiration
-    uint256 public constant EXPIRATION_TIME = 7 days;
+    uint256 public constant EXPIRATION_TIME = 7 days; // @audit private visibility can be used, for below mappings as well
     uint256 public constant MAX_CONTEST_PERIOD = 28 days;
 
     /// @notice record contest close time by salt
@@ -89,6 +89,7 @@ contract ProxyFactory is Ownable, EIP712 {
             unchecked {
                 i++;
             }
+            // @audit ++i can be used
         }
     }
 
@@ -241,6 +242,7 @@ contract ProxyFactory is Ownable, EIP712 {
     function getProxyAddress(bytes32 salt, address implementation) public view returns (address proxy) {
         bytes memory code = abi.encodePacked(type(Proxy).creationCode, uint256(uint160(implementation)));
         bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(code)));
+        // @audit abi.encode should be preferred
         proxy = address(uint160(uint256(hash)));
     }
 
