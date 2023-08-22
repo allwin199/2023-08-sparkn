@@ -61,19 +61,15 @@ contract ProxyFactory is Ownable, EIP712 {
     /////// State Variables ////////
     ////////////////////////////////
     // contest distribution expiration
-    uint256 public constant EXPIRATION_TIME = 7 days; // @audit private visibility can be used, for below mappings as well
+    uint256 public constant EXPIRATION_TIME = 7 days;
     uint256 public constant MAX_CONTEST_PERIOD = 28 days;
 
     /// @notice record contest close time by salt
     /// @dev The contest doesn't exist when value is 0
     mapping(bytes32 => uint256) public saltToCloseTime;
-    // @audit named mapping can be used for better readability
-    // mapping(bytes32 contestId => uint256 contestDuration) public whitelistedTokens;
+
     /// @dev record whitelisted tokens
     mapping(address => bool) public whitelistedTokens;
-    // @audit named mapping can be used for better readability
-    // mapping(address token => bool isWhiteListed) public whitelistedTokens;
-    // @audit uint256 can be used instead of bool
 
     ////////////////////////////
     /////// Constructor ////////
@@ -93,7 +89,6 @@ contract ProxyFactory is Ownable, EIP712 {
             }
         }
     }
-    // @audit calldata can be used instead of memory // low
 
     ////////////////////////////////////////////
     /////// External & Public functions ////////
@@ -149,7 +144,7 @@ contract ProxyFactory is Ownable, EIP712 {
     /**
      * @notice deploy proxy contract and distribute prize on behalf of organizer
      * @dev the caller can only control his own contest
-     * @dev It uess EIP712 to verify the signature to avoid replay attacks // @audit typo
+     * @dev It uess EIP712 to verify the signature to avoid replay attacks
      * @dev front run is allowed because it will only help the tx sender
      * @param organizer The organizer of the contest
      * @param contestId The contest id

@@ -35,6 +35,9 @@ import {ProxyFactory} from "./ProxyFactory.sol";
  * @dev Although the contract is immutable after deployment, If we want to upgrade the implementation contract
  * we can deploy a new one and change the implementation address of proxy contract.
  */
+//@audit JPYC & DAI has 18 decimals
+//@audit USDC and USDT has 6 decimals
+//
 contract Distributor {
     using SafeERC20 for IERC20;
     //////////////////////
@@ -55,9 +58,7 @@ contract Distributor {
     /* solhint-disable */
     uint8 private constant VERSION = 1; // version is 1 for now
     address private immutable FACTORY_ADDRESS;
-    //@audit immutable consistency
-    // follow same like proxy.sol
-    // _factoryAddress or i_factoryAddress
+
     address private immutable STADIUM_ADDRESS;
     uint256 private constant COMMISSION_FEE = 500; // this can be changed in the future
     // a constant value of 10,000 (basis points) = 100%
@@ -77,7 +78,7 @@ contract Distributor {
     ) 
     /* solhint-enable */
     {
-        if (factoryAddress == address(0) || stadiumAddress == address(0)) revert Distributor__NoZeroAddress(); // @audit if condition consistency, no brackets here, but brackets are present in other
+        if (factoryAddress == address(0) || stadiumAddress == address(0)) revert Distributor__NoZeroAddress();
         FACTORY_ADDRESS = factoryAddress; // initialize with deployed factory address beforehand
         STADIUM_ADDRESS = stadiumAddress; // official address to receive commission fee
     }
@@ -100,8 +101,6 @@ contract Distributor {
         }
         _distribute(token, winners, percentages, data);
     }
-    // @audit use calldata over memory
-    // reference => https://gist.github.com/hrkrshnn/ee8fabd532058307229d65dcd5836ddc#use-calldata-instead-of-memory-for-function-parameters
 
     ////////////////////////////////////////////
     /////// Internal & Private functions ///////
@@ -118,8 +117,7 @@ contract Distributor {
      * @param percentages The percentages of winners
      * @param data The data to be logged. It is supposed to be used for showing the realation bbetween winners and proposals.
      */
-    // @audit data has typos
-    // @audit use calldata over memory
+
     function _distribute(address token, address[] memory winners, uint256[] memory percentages, bytes memory data)
         internal
     {
@@ -130,19 +128,16 @@ contract Distributor {
         }
         // winners and percentages input check
         if (winners.length == 0 || winners.length != percentages.length) revert Distributor__MismatchedArrays();
-        // @audit winners is reading twice from storage // low
         uint256 percentagesLength = percentages.length;
-        // @audit percentage length should be moved before the condition checking
         uint256 totalPercentage;
         for (uint256 i; i < percentagesLength;) {
-            totalPercentage += percentages[i]; // @audit += is used
+            totalPercentage += percentages[i];
             unchecked {
                 ++i;
             }
         }
         // check if totalPercentage is correct
         if (totalPercentage != (10000 - COMMISSION_FEE)) {
-            // @audit magic number is used
             revert Distributor__MismatchedPercentages();
         }
         IERC20 erc20 = IERC20(token);
@@ -151,7 +146,6 @@ contract Distributor {
         // if there is no token to distribute, then revert
         if (totalAmount == 0) revert Distributor__NoTokenToDistribute();
         uint256 winnersLength = winners.length; // cache length
-        // @audit winnersLength should be moved higher, so it can be used in multiple places
         for (uint256 i; i < winnersLength;) {
             uint256 amount = totalAmount * percentages[i] / BASIS_POINTS;
             erc20.safeTransfer(winners[i], amount);
