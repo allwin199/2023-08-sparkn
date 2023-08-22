@@ -93,7 +93,7 @@ contract ProxyFactory is Ownable, EIP712 {
             }
         }
     }
-    // @audit calldata can be used instead of memory
+    // @audit calldata can be used instead of memory // low
 
     ////////////////////////////////////////////
     /////// External & Public functions ////////

@@ -130,8 +130,9 @@ contract Distributor {
         }
         // winners and percentages input check
         if (winners.length == 0 || winners.length != percentages.length) revert Distributor__MismatchedArrays();
-        // @audit winners is reading twice from storage
+        // @audit winners is reading twice from storage // low
         uint256 percentagesLength = percentages.length;
+        // @audit percentage length should be moved before the condition checking
         uint256 totalPercentage;
         for (uint256 i; i < percentagesLength;) {
             totalPercentage += percentages[i]; // @audit += is used
